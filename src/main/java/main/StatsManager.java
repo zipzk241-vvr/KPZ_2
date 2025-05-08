@@ -25,20 +25,28 @@ public class StatsManager {
         return instance;
     }
 
-    public void saveResult(String result) {
-        JSONObject stats = new JSONObject();
-        int playerWins = 0;
-        int dealerWins = 0;
-
+    private JSONObject loadStats() {
         try {
             String content = new String(Files.readAllBytes(Paths.get(SAVE_FILE)), StandardCharsets.UTF_8);
-            JSONObject old = (JSONObject) new JSONParser().parse(content);
-            playerWins = ((Long) old.getOrDefault("playerWins", 0L)).intValue();
-            dealerWins = ((Long) old.getOrDefault("dealerWins", 0L)).intValue();
-        } catch (IOException | ParseException ignored) {}
+            return (JSONObject) new JSONParser().parse(content);
+        } catch (IOException | ParseException e) {
+            return new JSONObject(); // повертаємо пустий JSON
+        }
+    }
+    
 
-        if (result.contains("Player wins")) playerWins++;
-        else dealerWins++;
+    @SuppressWarnings("unchecked")
+    public void saveResult(String result) {
+        JSONObject stats = loadStats();
+
+        Long playerWins = stats.get("playerWins") != null ? (Long) stats.get("playerWins") : 0L;
+        Long dealerWins = stats.get("dealerWins") != null ? (Long) stats.get("dealerWins") : 0L;
+
+        if (result.contains("Player wins")) {
+            playerWins++;
+        } else {
+            dealerWins++;
+        }
 
         stats.put("playerWins", playerWins);
         stats.put("dealerWins", dealerWins);
@@ -50,13 +58,15 @@ public class StatsManager {
             System.out.println("Failed to save stats: " + e.getMessage());
         }
     }
-
+ 
     public void showStats() {
         try {
             String content = new String(Files.readAllBytes(Paths.get(SAVE_FILE)), StandardCharsets.UTF_8);
             JSONObject stats = (JSONObject) new JSONParser().parse(content);
-            int playerWins = ((Long) stats.getOrDefault("playerWins", 0L)).intValue();
-            int dealerWins = ((Long) stats.getOrDefault("dealerWins", 0L)).intValue();
+    
+            Long playerWins = stats.get("playerWins") != null ? (Long) stats.get("playerWins") : 0L;
+            Long dealerWins = stats.get("dealerWins") != null ? (Long) stats.get("dealerWins") : 0L;
+    
             System.out.println("Statistics:");
             System.out.println("Player wins: " + playerWins);
             System.out.println("Dealer wins: " + dealerWins);
